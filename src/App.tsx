@@ -6,10 +6,17 @@ import "./App.css";
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
+  const [data, setData] = useState("");
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
     setGreetMsg(await invoke("greet", { name }));
+  }
+
+  async function send_recv_postgres() {
+    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+    setQuery(await invoke("send_recv_postgres", { data }));
   }
 
   return (
@@ -44,8 +51,24 @@ function App() {
         />
         <button type="submit">Greet</button>
       </form>
-
       <p>{greetMsg}</p>
+
+      <form
+        className="row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          send_recv_postgres();
+        }}
+      >
+        <input
+          id="postgres"
+          onChange={(e) => setData(e.currentTarget.value)}
+          placeholder="Enter a postgres query..."
+        />
+        <button type="submit">Query Postgres</button>
+      </form>
+      <p>{query}</p>
+
     </div>
   );
 }
