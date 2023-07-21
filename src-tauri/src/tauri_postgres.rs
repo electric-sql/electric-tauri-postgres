@@ -1,4 +1,6 @@
+// For displaying postgres logs in the console
 use env_logger::Env;
+
 use pg_embed::pg_enums::PgAuthMethod;
 use pg_embed::pg_errors::{PgEmbedError, PgEmbedErrorType};
 use pg_embed::pg_fetch::{PgFetchSettings, PG_V15};
@@ -49,15 +51,15 @@ pub async fn tauri_pg_init_database() -> PgEmbed {
     pg.start_db().await.expect("start_db should not fail here");
     let db_name = "test";
     if !pg
-        .database_exists(&db_name)
+        .database_exists(db_name)
         .await
         .expect("The check should not fail here")
     {
-        pg.create_database(&db_name)
+        pg.create_database(db_name)
             .await
             .expect("create_database should not fail here");
     };
-    pg.migrate(&db_name)
+    pg.migrate(db_name)
         .await
         .expect("migrate should not fail here");
 
@@ -65,36 +67,16 @@ pub async fn tauri_pg_init_database() -> PgEmbed {
 }
 
 pub async fn tauri_pg_connect(pg: &PgEmbed, db_name: &str) -> PgConnection {
-    // let _ = pg.setup().await;
-    let db_uri = pg.full_db_uri(&db_name);
-    let mut conn = PgConnection::connect(&db_uri)
+    let db_uri = pg.full_db_uri(db_name);
+
+    PgConnection::connect(&db_uri)
         .await
         .map_err(|_| PgEmbedError {
             error_type: PgEmbedErrorType::SqlQueryError,
             source: None,
             message: None,
         })
-        .expect("PgConnection should not fail here");
-
-    // let _ = sqlx::query("CREATE TABLE IF NOT EXISTS testing (id BIGSERIAL PRIMARY KEY, description TEXT NOT NULL, done BOOLEAN NOT NULL DEFAULT FALSE)")
-    // .execute(&mut conn)
-    // .await
-    // .map_err(|_| PgEmbedError {
-    //     error_type: PgEmbedErrorType::SqlQueryError,
-    //     source: None,
-    //     message: None,
-    // }).expect("This query should not fail");
-
-    // let _ = sqlx::query("INSERT INTO testing (description) VALUES ('Hello')")
-    //     .execute(&mut conn)
-    //     .await
-    //     .map_err(|_| PgEmbedError {
-    //         error_type: PgEmbedErrorType::SqlQueryError,
-    //         source: None,
-    //         message: None,
-    //     }).expect("This query should not fail");
-
-    conn
+        .expect("PgConnection should not fail here")
 }
 
 #[tokio::main]
@@ -176,7 +158,7 @@ fn row_to_json(row: PgRow) -> HashMap<String, String> {
 }
 
 pub async fn tauri_pg_query(mut conn: PgConnection, line: &str) -> String {
-    let rows = match sqlx::query(line.as_ref())
+    let rows = match sqlx::query(line)
         .fetch_all(&mut conn)
         .await
         .map_err(|_| PgEmbedError {
@@ -190,23 +172,18 @@ pub async fn tauri_pg_query(mut conn: PgConnection, line: &str) -> String {
             return error.to_string();
         }
     };
-
-    let mut result = String::new().to_owned();
+    let mut result = String::new();
     for row in rows {
         let row_column = row_to_json(row);
-        for (key, value) in row_column {
-            result.push_str(key.as_str());
-            result.push_str("|".as_ref());
-            result.push_str(value.as_str());
-        }
+        result.push_str(serde_json::to_string(&row_column).unwrap().as_str());
     }
 
-    return result;
+    result
 }
 
 #[tokio::main]
 pub async fn tauri_pg_query_sync(mut conn: PgConnection, line: &str) -> String {
-    let rows = match sqlx::query(line.as_ref())
+    let rows = match sqlx::query(line)
         .fetch_all(&mut conn)
         .await
         .map_err(|_| PgEmbedError {
@@ -221,17 +198,13 @@ pub async fn tauri_pg_query_sync(mut conn: PgConnection, line: &str) -> String {
         }
     };
 
-    let mut result = String::new().to_owned();
+    let mut result = String::new();
     for row in rows {
         let row_column = row_to_json(row);
-        for (key, value) in row_column {
-            result.push_str(key.as_str());
-            result.push_str("|".as_ref());
-            result.push_str(value.as_str());
-        }
+        result.push_str(serde_json::to_string(&row_column).unwrap().as_str());
     }
 
-    return result;
+    result
 }
 
 #[tokio::main]
