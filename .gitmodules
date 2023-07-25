@@ -1,0 +1,3 @@
+[submodule "src-tauri/crates/pg-embed"]
+	path = src-tauri/crates/pg-embed
+	url = git@github.com:tachyonicbytes/pg-embed.git
