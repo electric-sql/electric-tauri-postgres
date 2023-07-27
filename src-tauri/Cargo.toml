@@ -26,6 +26,7 @@ tauri-plugin-log = { git = "https://github.com/lencx/tauri-plugins-workspace", b
 log = "0.4.19"
 lazy_static = "1.4.0"
 portable-pty = "0.8.1"
+urlencoding = "2.1.3"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

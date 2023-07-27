@@ -12,6 +12,7 @@ use sqlx::{Column, Row, ValueRef};
 use sqlx::{Connection, PgConnection};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::Duration;
 
 pub async fn tauri_pg_setup(
@@ -26,6 +27,8 @@ pub async fn tauri_pg_setup(
     let pg_settings = PgSettings {
         database_dir,
         port,
+        socket: Some(PathBuf::from("/tmp/")),
+        // socket: None,
         user: "postgres".to_string(),
         password: "password".to_string(),
         auth_method: PgAuthMethod::MD5,
@@ -68,7 +71,7 @@ pub async fn tauri_pg_init_database() -> PgEmbed {
 
 pub async fn tauri_pg_connect(pg: &PgEmbed, db_name: &str) -> PgConnection {
     let db_uri = pg.full_db_uri(db_name);
-
+    println!("{}", db_uri.clone());
     PgConnection::connect(&db_uri)
         .await
         .map_err(|_| PgEmbedError {
